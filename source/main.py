@@ -1,8 +1,7 @@
 __author__ = 'matan'
 
 import pygame
-import operator
-
+import tmx
 
 DISPLAY = (800, 640)
 
