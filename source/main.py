@@ -1,7 +1,10 @@
 __author__ = 'matan'
 
 import pygame
-import tmx
+#import tmx
+
+
+#TODO fix the bug with jumping player near the boxes
 
 DISPLAY = (800, 640)
 
@@ -30,7 +33,7 @@ class Player(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self, Group)
         self.image = pygame.Surface((32, 32))
         self.size = (32, 32)
-        self.rect = pygame.Rect(0, 0, self.size[0], self.size[1])
+        self.rect = pygame.Rect(0, 0, *self.size)
         self.bound = None
         self.speed = [0, 0]
         self.max_speed_x = (-15, 15)
@@ -54,21 +57,10 @@ class Player(pygame.sprite.Sprite):
             self.speed[1] = speedY
 
     def update(self, dt):
-        pressed = pygame.key.get_pressed()
-
-        speed = [0, 0]
-        if pressed[pygame.K_SPACE]:
-            speed[1] = -400 * dt
-        if pressed[pygame.K_LEFT]:
-            speed[0] = -300 * dt
-        if pressed[pygame.K_RIGHT]:
-            speed[0] = 300 * dt
-        self.set_speed(speed)
-
         self.__apply_acceleration()
         self.__clamp_speed()
-        self.rect.move_ip(self.speed[0], self.speed[1])
-        self.__collide(checkX=True, checkY=True)
+        self.__collide()
+        self.rect.move_ip(*self.speed)
         if self.bound:
             self.rect.clamp_ip(self.bound)
 
@@ -89,30 +81,23 @@ class Player(pygame.sprite.Sprite):
             self.speed[0] += self.slowdownAcceleration * -1
 
 
-    def __collide(self, checkX=False, checkY=False):
-        if checkY:
-            for box in self.solid_objects.sprites():
-                if pygame.sprite.collide_rect(self, box):
-                    if self.speed[1] > 0 and box.rect.top < self.rect.bottom: #object is fallen
-                        self._onGround = True
-                        self.rect.bottom = box.rect.top
-                        self.speed[1] = 0
-                        break
-                    if self.speed[1] < 0 and box.rect.bottom > self.rect.top:
-                        self.rect.top = box.rect.bottom
-                        self.speed[1] = 0
-                        break
-        if checkX:
-            for box in self.solid_objects.sprites():
-               if pygame.sprite.collide_rect(self, box):
-                    if self.speed[0] > 0 and self.rect.right > box.rect.left:
-                        self.speed[0] = 0
-                        self.rect.right = box.rect.left
-                        break
-                    if self.speed[0] < 0 and box.rect.right > self.rect.left:
-                        self.speed[0] = 0
-                        self.rect.left = box.rect.right
-                        break
+    def __collide(self):
+        temp_rect = self.rect.move(*self.speed)
+        for box in self.solid_objects.sprites():
+            if temp_rect.colliderect(box.rect):
+                if self.speed[1] > 0 and box.rect.top < temp_rect.bottom: #object is fallen
+                    self._onGround = True
+                    self.speed[1] = 0
+                if self.speed[1] < 0 and box.rect.bottom > temp_rect.top:
+                    self.speed[1] = 0
+
+        temp_rect = self.rect.move(*self.speed)
+        for box in self.solid_objects.sprites():
+           if temp_rect.colliderect(box.rect):
+                if self.speed[0] > 0 and temp_rect.right > box.rect.left:
+                    self.speed[0] = 0
+                if self.speed[0] < 0 and box.rect.right > temp_rect.left:
+                    self.speed[0] = 0
 
 
 class Game(object):
@@ -144,6 +129,15 @@ class Game(object):
             ev = pygame.event.poll()
             if ev.type == pygame.QUIT:
                 break
+            pressed = pygame.key.get_pressed()
+            speed = [0, 0]
+            if pressed[pygame.K_SPACE]:
+                speed[1] = -500 * dt / 1000.0
+            if pressed[pygame.K_LEFT]:
+                speed[0] = -100 * dt / 1000.0
+            if pressed[pygame.K_RIGHT]:
+                speed[0] = 100 * dt / 1000.0
+            player.set_speed(speed)
 
             screen.fill(pygame.Color("#000000"))
             entities.update(dt / 1000.0)
