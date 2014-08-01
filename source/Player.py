@@ -1,9 +1,20 @@
 __author__ = 'blah-blah'
 
 import pygame
+from auxiliary import *
 
-def Clamp(value, min_value, max_value):
-    return min(max(value, min_value), max_value)
+#TODO gun generates bullets
+
+class TestGun():
+    def __init__(self, owner):
+        self.owner = owner
+        self.bullet_speed = (100, 100)
+
+    def get_pos(self):
+        return self.owner.rect.center
+
+    def radius(self):
+        return 100
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, *Group):
@@ -20,11 +31,12 @@ class Player(pygame.sprite.Sprite):
         self.g = 1
         self.image.fill(pygame.Color("#0000ff"))
 
+        self.gun = TestGun(self)
+
     def set_speed(self, speed):
         self.set_speed_x(speed[0])
         self.set_speed_y(speed[1])
         self.__clamp_speed()
-        self._onGround = False
 
     def set_speed_x(self, speedX):
         self.speed[0] = +speedX
@@ -33,7 +45,11 @@ class Player(pygame.sprite.Sprite):
         if self._onGround and speedY < 0 :
             self.speed[1] = speedY
 
+
     def update(self, dt):
+        self._onGround = False
+        self.__clamp_speed()
+
         self.__apply_acceleration()
         self.__clamp_speed()
         self.__collide()
@@ -42,8 +58,8 @@ class Player(pygame.sprite.Sprite):
             self.rect.clamp_ip(self.bound)
 
     def __clamp_speed(self):
-        self.speed[0] = Clamp(self.speed[0], *self.max_speed_x)
-        self.speed[1] = Clamp(self.speed[1], *self.max_speed_y)
+        self.speed[0] = clamp(self.speed[0], *self.max_speed_x)
+        self.speed[1] = clamp(self.speed[1], *self.max_speed_y)
 
     def __apply_acceleration(self):
         #G
@@ -57,7 +73,6 @@ class Player(pygame.sprite.Sprite):
         elif self.speed[0] > 0:
             self.speed[0] += self.slowdownAcceleration * -1
 
-
     def __collide(self):
         temp_rect = self.rect.move(0, self.speed[1])
         for box in self.solid_objects.sprites():
@@ -70,9 +85,8 @@ class Player(pygame.sprite.Sprite):
 
         temp_rect = self.rect.move(self.speed[0], 0)
         for box in self.solid_objects.sprites():
-           if temp_rect.colliderect(box.rect):
+            if temp_rect.colliderect(box.rect):
                 if self.speed[0] > 0 and temp_rect.right > box.rect.left:
                     self.speed[0] = 0
                 if self.speed[0] < 0 and box.rect.right > temp_rect.left:
                     self.speed[0] = 0
-
