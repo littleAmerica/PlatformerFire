@@ -1,98 +1,61 @@
 __author__ = 'matan'
 
 import pygame
-from Player import Player
-import constants
+from player import Player
+from simple_sprite import *
 from auxiliary import *
 #import tmx
 
-LEFT_MOUSE = 1
-RIGHT_MOUSE = 3
-
 #Tower like in ice climbers
-
-DISPLAY = (800, 640)
-
-# key bindings
-move_map = {pygame.K_LEFT: [-1, 0],
-            pygame.K_RIGHT: [1, 0],
-            pygame.K_SPACE: [0, -1],
-            }
-
-
-
-class Box(pygame.sprite.Sprite):
-    def __init__(self, size=(32, 32), pos=(0, 0)):
-        pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.Surface(size)
-        self.image.fill(constants.RED)
-        self.rect = pygame.Rect(pos[0], pos[1], size[0], size[1])
-        self.level = 1
-
-    def update(self, dt):
-        pass
-
-
-class Bullet(pygame.sprite.Sprite):
-    def __init__(self, size=(4, 4), pos=(0, 0)):
-        pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.Surface(size)
-        self.image.fill(constants.GREEN)
-        self.rect = pygame.Rect(pos[0], pos[1], size[0], size[1])
-        self.size = size
-        self.origin_center = self.rect.center
-
-        self.speed = (0, 0)
-        self.age = 0
-
-    @classmethod
-    def from_mouse_even(cls, gun, mouse_even):
-        bullet = Bullet(pos=gun.get_pos())
-
-        mouse_pos = mouse_even.pos
-        bullet_direction = normalize(sub(mouse_pos, gun.get_pos()))
-
-        bullet.speed = multiply(gun.bullet_speed, bullet_direction)
-        return bullet
-
-    def update(self, dt):
-        #getting older
-        self.age += dt
-
-        general_passed_way = multiplybyNumber(self.speed, self.age)
-        self.rect.center = add(self.origin_center, general_passed_way)
-
-        print(self.rect)
-
-      #  if not self.rect.colliderect(self.bound):
-            #well if the object leave the object it should be remove
-       #     self.kill()
-
+#TODO Animation module
+#TODO Parser TMX module
 
 class Game(object):
+
+    DISPLAY = (800, 640)
+    
+    keyboard_map = {}
+
+    def __init__(self):
+        self.entities = pygame.sprite.Group()
+    #     layers = parseTMX(tmx_file_name())
+    #     enteties = getAllObject(layers)
+    #     player = Player(enteties)
+    #     player.solid_objects = getTouchable(layers)
+    
+    def init_player(self):
+        self.player = Player(self.entities)
+
+        #make closure action (delay evaluation of method call - when we only need it)
+        make_action = lambda object, method: lambda :method(object)
+        player_map = {key: make_action(self.player, action) for key, action in Player.move_map.items()}
+
+        Game.keyboard_map = dict_union(Game.keyboard_map, player_map)
+
+
     def main(self, screen):
         timer = pygame.time.Clock()
         dt = timer.tick(30)
 
-        entities = pygame.sprite.Group()
-        boxes = pygame.sprite.Group()
-        bullets = pygame.sprite.Group()
+        self.init_player()
 
-        player = Player(entities)
-        player.bound = screen.get_rect()
- #       entities.add(player)
+        boxes = pygame.sprite.Group(self.entities)
+        bullets = pygame.sprite.Group(self.entities)
 
-        for i in range(DISPLAY[0]//256):
-            box = Box(pos=(32 * i * 8, DISPLAY[1] - 128))
+        self.player.bound = screen.get_rect()
+ #       self.entities.add(player)
+
+        for i in range(Game.DISPLAY[0]//256):
+            box = Box(pos=(32 * i * 8, Game.DISPLAY[1] - 128))
             boxes.add(box)
 
-        boxes.add(Box(pos=(0, DISPLAY[1] - 32), size=(DISPLAY[0], 32)))
-        boxes.add(Box(pos=(128, DISPLAY[1] - 64), size=(32, 32)))
+        boxes.add(Box(pos=(0, Game.DISPLAY[1] - 32), size=(Game.DISPLAY[0], 32)))
+        boxes.add(Box(pos=(128, Game.DISPLAY[1] - 64), size=(32, 32)))
 
-        entities.add(boxes)
-        entities.add(bullets)
+        self.player.solid_objects = boxes
 
-        player.solid_objects = boxes
+        self.entities.add(boxes)
+        self.entities.add(bullets)
 
         while True:
             timer.tick(60)
@@ -100,27 +63,26 @@ class Game(object):
             if ev.type == pygame.QUIT:
                 break
             if ev.type == pygame.MOUSEBUTTONDOWN:
-                if ev.button == LEFT_MOUSE:
-                    entities.add(Bullet.from_mouse_even(player.gun, ev))
-                elif ev.button == RIGHT_MOUSE:
-                    jump = -500 * dt / 1000.0
-                    player.set_speed_y(jump)
+                if ev.button == constants.LEFT_MOUSE:
+                    bullet = self.player.gun.shoot(ev.pos)
+                    self.entities.add(bullet)
+                elif ev.button == constants.RIGHT_MOUSE:
+                    self.player.jump()
 
             pressed = pygame.key.get_pressed()
-            speed = [0, 0]
-            if pressed[pygame.K_LEFT]:
-                speed[0] = -500 * dt / 1000.0
-            if pressed[pygame.K_RIGHT]:
-                speed[0] = 500 * dt / 1000.0
-            player.set_speed(speed)
+
+            for key, execute in Game.keyboard_map.items():
+                if pressed[key]:
+                    print key, execute
+                    Game.keyboard_map[key]()
 
             screen.fill(constants.BLACK)
-            entities.update(dt / 1000.0)
-            entities.draw(screen)
+            self.entities.update(dt / 1000.0)
+            self.entities.draw(screen)
 
             pygame.display.flip()
 
 if __name__ == "__main__":
     pygame.init()
-    screen = pygame.display.set_mode(DISPLAY)
+    screen = pygame.display.set_mode(Game.DISPLAY)
     Game().main(screen)

@@ -43,5 +43,10 @@ def normalize(v):
     vmag = magnitude(v)
     return [v[i]/vmag  for i in range(len(v))]
 
+
 def clamp(value, min_value, max_value):
     return min(max(value, min_value), max_value)
+
+
+def dict_union(d1, d2):
+    return dict(d1, **d2)

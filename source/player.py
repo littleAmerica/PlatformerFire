@@ -2,21 +2,19 @@ __author__ = 'blah-blah'
 
 import pygame
 from auxiliary import *
+from guns_and_roses import *
 
-#TODO gun generates bullets
 
-class TestGun():
-    def __init__(self, owner):
-        self.owner = owner
-        self.bullet_speed = (100, 100)
 
-    def get_pos(self):
-        return self.owner.rect.center
-
-    def radius(self):
-        return 100
 
 class Player(pygame.sprite.Sprite):
+
+    move_map = {
+                pygame.K_SPACE: lambda player: Player.jump(player),
+                pygame.K_a: lambda player: Player.move_left(player),
+                pygame.K_d: lambda player: Player.move_right(player),
+                }
+
     def __init__(self, *Group):
         pygame.sprite.Sprite.__init__(self, Group)
         self.image = pygame.Surface((32, 32))
@@ -33,23 +31,20 @@ class Player(pygame.sprite.Sprite):
 
         self.gun = TestGun(self)
 
-    def set_speed(self, speed):
-        self.set_speed_x(speed[0])
-        self.set_speed_y(speed[1])
-        self.__clamp_speed()
+    def move_right(self):
+        self.speed[0] += 10
+        self._onGround = False
 
-    def set_speed_x(self, speedX):
-        self.speed[0] = +speedX
+    def move_left(self):
+        self.speed[0] -= 10
+        self._onGround = False
 
-    def set_speed_y(self, speedY):
-        if self._onGround and speedY < 0 :
-            self.speed[1] = speedY
-
+    def jump(self):
+        if self._onGround:
+            self.speed[1] = -30
+            self._onGround = False
 
     def update(self, dt):
-        self._onGround = False
-        self.__clamp_speed()
-
         self.__apply_acceleration()
         self.__clamp_speed()
         self.__collide()
@@ -65,8 +60,6 @@ class Player(pygame.sprite.Sprite):
         #G
         if not self._onGround:
             self.speed[1] += self.g
-        else:
-            self.speed[1] = 0
 
         if self.speed[0] < 0:
             self.speed[0] += self.slowdownAcceleration * 1
@@ -79,14 +72,18 @@ class Player(pygame.sprite.Sprite):
             if temp_rect.colliderect(box.rect):
                 if self.speed[1] > 0 and box.rect.top < temp_rect.bottom: #object is fallen
                     self._onGround = True
+                    self.rect.bottom = box.rect.top
                     self.speed[1] = 0
                 if self.speed[1] < 0 and box.rect.bottom > temp_rect.top:
                     self.speed[1] = 0
+                    self.rect.top = box.rect.bottom
 
         temp_rect = self.rect.move(self.speed[0], 0)
         for box in self.solid_objects.sprites():
             if temp_rect.colliderect(box.rect):
                 if self.speed[0] > 0 and temp_rect.right > box.rect.left:
                     self.speed[0] = 0
+                    self.rect.right = box.rect.left
                 if self.speed[0] < 0 and box.rect.right > temp_rect.left:
                     self.speed[0] = 0
+                    self.rect.left = box.rect.right
