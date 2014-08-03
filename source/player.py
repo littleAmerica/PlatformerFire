@@ -5,7 +5,15 @@ from auxiliary import *
 from guns_and_roses import *
 
 
+G = 1
 
+MAX_SPEED_X = (-15, 15)
+MAX_SPEED_Y = (-100, 100)
+
+
+PLAYER_SLOW_ACCELERATION = 1
+PLAYER_SPEED_ACCELERATION = 2
+PLAYER_JUMP_ACCELERATION = 8
 
 class Player(pygame.sprite.Sprite):
 
@@ -15,56 +23,69 @@ class Player(pygame.sprite.Sprite):
                 pygame.K_d: lambda player: Player.move_right(player),
                 }
 
-    def __init__(self, *Group):
-        pygame.sprite.Sprite.__init__(self, Group)
-        self.image = pygame.Surface((32, 32))
-        self.size = (32, 32)
+    def __init__(self, size=(16, 16)):
+        pygame.sprite.Sprite.__init__(self)
+        self.size = size
+        self.image = pygame.Surface(self.size)
+
         self.rect = pygame.Rect(0, 0, *self.size)
         self.bound = None
         self.speed = [0, 0]
-        self.max_speed_x = (-15, 15)
-        self.max_speed_y = (-100, 100)
+        self.move = [0, 0]
+
         self._onGround = False
-        self.slowdownAcceleration = 1
-        self.g = 1
         self.image.fill(pygame.Color("#0000ff"))
 
         self.gun = TestGun(self)
 
+
     def move_right(self):
-        self.speed[0] += 10
+        self.move[0] = 1
         self._onGround = False
 
+
     def move_left(self):
-        self.speed[0] -= 10
+        self.move[0] = -1
         self._onGround = False
+
 
     def jump(self):
         if self._onGround:
-            self.speed[1] = -30
+            self.move[1] = -1
             self._onGround = False
 
+
     def update(self, dt):
-        self.__apply_acceleration()
-        self.__clamp_speed()
+        self.__apply_speed()
         self.__collide()
         self.rect.move_ip(*self.speed)
         if self.bound:
             self.rect.clamp_ip(self.bound)
 
-    def __clamp_speed(self):
-        self.speed[0] = clamp(self.speed[0], *self.max_speed_x)
-        self.speed[1] = clamp(self.speed[1], *self.max_speed_y)
 
-    def __apply_acceleration(self):
-        #G
+    def shoot(self, to):
+        return self.gun.shoot(to)
+
+
+    def __apply_speed(self):
+        if any(self.move):
+            self.speed = add(self.speed, multiply(self.move, [PLAYER_SPEED_ACCELERATION, PLAYER_JUMP_ACCELERATION]))
+
+        self.move = [0, 0]
+
+        # apply slowdown acceleration + G
         if not self._onGround:
-            self.speed[1] += self.g
-
+            self.speed[1] += G
         if self.speed[0] < 0:
-            self.speed[0] += self.slowdownAcceleration * 1
+            self.speed[0] += PLAYER_SLOW_ACCELERATION * 1
         elif self.speed[0] > 0:
-            self.speed[0] += self.slowdownAcceleration * -1
+            self.speed[0] += PLAYER_SLOW_ACCELERATION * -1
+        self.__clamp_speed()
+
+    def __clamp_speed(self):
+        self.speed[0] = clamp(self.speed[0], *MAX_SPEED_X)
+        self.speed[1] = clamp(self.speed[1], *MAX_SPEED_Y)
+
 
     def __collide(self):
         temp_rect = self.rect.move(0, self.speed[1])

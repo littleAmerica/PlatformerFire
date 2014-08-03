@@ -4,34 +4,43 @@ import pygame
 from player import Player
 from simple_sprite import *
 from auxiliary import *
-#import tmx
+import tile
 
 #Tower like in ice climbers
 #TODO Animation module
 #TODO Parser TMX module
 
+TILED_FILE = "../tiled/level1.tmx"
+
 class Game(object):
 
-    DISPLAY = (800, 640)
+    DISPLAY = (1600, 320)
     
     keyboard_map = {}
 
     def __init__(self):
-        self.entities = pygame.sprite.Group()
-    #     layers = parseTMX(tmx_file_name())
-    #     enteties = getAllObject(layers)
-    #     player = Player(enteties)
-    #     player.solid_objects = getTouchable(layers)
-    
+        self.entities = pygame.sprite.LayeredUpdates()
+        self.tiled = tile.get_tiled(TILED_FILE)
+
+        for layer in self.tiled:
+            if layer.level == "1":
+                self.solid = layer.cells
+            self.entities.add(layer.cells, layer=layer.level)
+
+
     def init_player(self):
-        self.player = Player(self.entities)
+        self.player = Player()
+        self.player.bound = screen.get_rect()
 
         #make closure action (delay evaluation of method call - when we only need it)
         make_action = lambda object, method: lambda :method(object)
         player_map = {key: make_action(self.player, action) for key, action in Player.move_map.items()}
 
-        Game.keyboard_map = dict_union(Game.keyboard_map, player_map)
+        self.player.solid_objects = self.solid
 
+        Game.keyboard_map = dict_union(Game.keyboard_map, player_map)
+        self.player.entities = self.entities
+        self.entities.add(self.player)
 
     def main(self, screen):
         timer = pygame.time.Clock()
@@ -39,22 +48,7 @@ class Game(object):
 
         self.init_player()
 
-        boxes = pygame.sprite.Group(self.entities)
-        bullets = pygame.sprite.Group(self.entities)
-
-        self.player.bound = screen.get_rect()
- #       self.entities.add(player)
-
-        for i in range(Game.DISPLAY[0]//256):
-            box = Box(pos=(32 * i * 8, Game.DISPLAY[1] - 128))
-            boxes.add(box)
-
-        boxes.add(Box(pos=(0, Game.DISPLAY[1] - 32), size=(Game.DISPLAY[0], 32)))
-        boxes.add(Box(pos=(128, Game.DISPLAY[1] - 64), size=(32, 32)))
-
-        self.player.solid_objects = boxes
-
-        self.entities.add(boxes)
+        bullets = pygame.sprite.Group()
         self.entities.add(bullets)
 
         while True:
@@ -64,19 +58,19 @@ class Game(object):
                 break
             if ev.type == pygame.MOUSEBUTTONDOWN:
                 if ev.button == constants.LEFT_MOUSE:
-                    bullet = self.player.gun.shoot(ev.pos)
+                    bullet = self.player.shoot(ev.pos)
+                    bullets.add(bullet)
                     self.entities.add(bullet)
                 elif ev.button == constants.RIGHT_MOUSE:
                     self.player.jump()
 
             pressed = pygame.key.get_pressed()
 
-            for key, execute in Game.keyboard_map.items():
+            for key, action in Game.keyboard_map.items():
                 if pressed[key]:
-                    print key, execute
-                    Game.keyboard_map[key]()
+                    action()
 
-            screen.fill(constants.BLACK)
+            screen.fill(constants.WHITE)
             self.entities.update(dt / 1000.0)
             self.entities.draw(screen)
 
