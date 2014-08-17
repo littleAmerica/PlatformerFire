@@ -37,7 +37,7 @@ class Bullet(pygame.sprite.Sprite):
         #getting older
         self.age += dt
 
-        self.passed_way = multiplybyNumber(self.speed, self.age)
+        self.passed_way = multiply(self.speed, self.age)
         self.rect.center = add(self.origin_center, self.passed_way)
 
         if not self.if_alive():

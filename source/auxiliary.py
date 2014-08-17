@@ -32,7 +32,7 @@ def multiply(u, v):
     #vector on constant
     if isinstance(v, (float, int)) and isinstance(u, (list, tuple)):
         c = v
-        return [c * elem for elem in v]
+        return [c * elem for elem in u]
     #vector on vector
     elif isinstance(v, (list, tuple)) and isinstance(u, (list, tuple)):
         return [u[i]*v[i] for i in range(len(u))]

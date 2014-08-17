@@ -102,7 +102,7 @@ class TileSet:
         image_context = tile_set_context.find("image")
         self.image_size = (int(image_context.attrib["width"]), int(image_context.attrib["height"]))
         image_path = os.path.abspath(image_context.attrib["source"])
-        self.image = pygame.image.load(image_path).convert()
+        self.image = pygame.image.load(image_path).convert_alpha()
 
         # for saving already processed sub image in get_image method
         self.sub_images = {}
