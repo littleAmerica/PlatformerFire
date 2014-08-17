@@ -1,5 +1,6 @@
 __author__ = 'Swallow'
 import math
+import operator
 
 #Vector operation
 def magnitude(v):
@@ -23,25 +24,33 @@ def dot(u, v):
 
 def multiply(u, v):
     """
+    multiply vector on another vector or a number
     :param u: vector1
-    :param v: vector2
+    :param v: vector2 or constant
     :return: u[0] * v[0], u[1] * v[1], ...
     """
-    return [u[i]*v[i] for i in range(len(u))]
+    #vector on constant
+    if isinstance(v, (float, int)) and isinstance(u, (list, tuple)):
+        c = v
+        return [c * elem for elem in v]
+    #vector on vector
+    elif isinstance(v, (list, tuple)) and isinstance(u, (list, tuple)):
+        return [u[i]*v[i] for i in range(len(u))]
 
+    def class_name(a):
+        return a.__class__.__name__
 
-def multiplybyNumber(v, c):
-    """
-    :param v: vector
-    :param c: constant
-    :return: v[0] * c, v[1] * c, ...
-    """
-    return [c * elem for elem in v]
+    raise TypeError("TypeError: unsupported operand type(s) for multiply function: {} and {}",
+                    class_name(u), class_name(v))
 
 
 def normalize(v):
     vmag = magnitude(v)
-    return [v[i]/vmag  for i in range(len(v))]
+    return [v[i]/vmag for i in range(len(v))]
+
+
+def division(u, v):
+    return [u[i] / v[i] for i in range(len(u))]
 
 
 def clamp(value, min_value, max_value):

@@ -43,8 +43,6 @@ class Bullet(pygame.sprite.Sprite):
         if not self.if_alive():
             self.kill()
 
-        print(self.rect)
-
     def if_alive(self):
         """
         Check if the bullet still exists. Otherwise we should remove it from the drawing group

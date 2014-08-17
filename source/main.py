@@ -7,10 +7,14 @@ from auxiliary import *
 import tile
 
 #Tower like in ice climbers
-#TODO Animation module
-#TODO Parser TMX module
+#TODO Animation - addmodule
+#TODO Camera - add module
+#TODO Phisics - something goes terrible wrong
+#TODO Phisics - events on touching with the screen
+#TODO Tiled - adding alpha for surfaces
 
 TILED_FILE = "../tiled/level1.tmx"
+
 
 class Game(object):
 
@@ -19,6 +23,7 @@ class Game(object):
     keyboard_map = {}
 
     def __init__(self):
+        self.player = None
         self.entities = pygame.sprite.LayeredUpdates()
         self.tiled = tile.get_tiled(TILED_FILE)
 
@@ -27,13 +32,12 @@ class Game(object):
                 self.solid = layer.cells
             self.entities.add(layer.cells, layer=layer.level)
 
-
     def init_player(self):
         self.player = Player()
         self.player.bound = screen.get_rect()
 
         #make closure action (delay evaluation of method call - when we only need it)
-        make_action = lambda object, method: lambda :method(object)
+        make_action = lambda obj, method: lambda: method(obj)
         player_map = {key: make_action(self.player, action) for key, action in Player.move_map.items()}
 
         self.player.solid_objects = self.solid
@@ -70,7 +74,8 @@ class Game(object):
                 if pressed[key]:
                     action()
 
-            screen.fill(constants.WHITE)
+            screen.fill(constants.SKY_BLUE)
+
             self.entities.update(dt / 1000.0)
             self.entities.draw(screen)
 
