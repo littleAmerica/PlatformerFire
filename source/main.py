@@ -18,7 +18,7 @@ TILED_FILE = "../tiled/level1.tmx"
 
 class Game(object):
 
-    DISPLAY = (1600, 320)
+    DISPLAY = (800, 320)
     
     keyboard_map = {}
 

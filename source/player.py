@@ -9,6 +9,8 @@ G = 1
 
 MAX_SPEED_X = (-15, 15)
 MAX_SPEED_Y = (-100, 100)
+PLAYER_SPEED = 6
+PLAYER_JUMP = -10
 
 
 PLAYER_SLOW_ACCELERATION = 1
@@ -40,25 +42,27 @@ class Player(pygame.sprite.Sprite):
 
 
     def move_right(self):
-        self.move[0] = 1
+        self.speed[0] = PLAYER_SPEED
         self._onGround = False
 
 
     def move_left(self):
-        self.move[0] = -1
+        self.speed[0] = -PLAYER_SPEED
         self._onGround = False
 
 
     def jump(self):
         if self._onGround:
-            self.move[1] = -1
+            if self.speed[1] == 0:
+                self.speed[1] = PLAYER_JUMP
             self._onGround = False
 
 
     def update(self, dt):
+        self._move_rect()
         self.__apply_speed()
-        self.__collide()
-        self.rect.move_ip(*self.speed)
+
+        self.speed[0] = 0
         if self.bound:
             self.rect.clamp_ip(self.bound)
 
@@ -68,18 +72,10 @@ class Player(pygame.sprite.Sprite):
 
 
     def __apply_speed(self):
-        if any(self.move):
-            self.speed = add(self.speed, multiply(self.move, [PLAYER_SPEED_ACCELERATION, PLAYER_JUMP_ACCELERATION]))
-
-        self.move = [0, 0]
 
         # apply slowdown acceleration + G
         if not self._onGround:
             self.speed[1] += G
-        if self.speed[0] < 0:
-            self.speed[0] += PLAYER_SLOW_ACCELERATION * 1
-        elif self.speed[0] > 0:
-            self.speed[0] += PLAYER_SLOW_ACCELERATION * -1
         self.__clamp_speed()
 
     def __clamp_speed(self):
@@ -87,24 +83,29 @@ class Player(pygame.sprite.Sprite):
         self.speed[1] = clamp(self.speed[1], *MAX_SPEED_Y)
 
 
-    def __collide(self):
-        temp_rect = self.rect.move(0, self.speed[1])
+    def _move_rect(self):
+        """
+            Moving a player with taking in account of solid objects
+        """
+        self.rect.move_ip(0, self.speed[1])
         for box in self.solid_objects.sprites():
-            if temp_rect.colliderect(box.rect):
-                if self.speed[1] > 0 and box.rect.top < temp_rect.bottom: #object is fallen
+            if self.rect.colliderect(box.rect):
+                if self.speed[1] > 0 and box.rect.top < self.rect.bottom: #object is fallen
                     self._onGround = True
                     self.rect.bottom = box.rect.top
                     self.speed[1] = 0
-                if self.speed[1] < 0 and box.rect.bottom > temp_rect.top:
+                if self.speed[1] < 0 and box.rect.bottom > self.rect.top:
                     self.speed[1] = 0
                     self.rect.top = box.rect.bottom
 
-        temp_rect = self.rect.move(self.speed[0], 0)
+        self.rect.move_ip(self.speed[0], 0)
         for box in self.solid_objects.sprites():
-            if temp_rect.colliderect(box.rect):
-                if self.speed[0] > 0 and temp_rect.right > box.rect.left:
+            if self.rect.colliderect(box.rect):
+                if self.speed[0] > 0 and self.rect.right > box.rect.left:
                     self.speed[0] = 0
                     self.rect.right = box.rect.left
-                if self.speed[0] < 0 and box.rect.right > temp_rect.left:
+                    print "Test"
+                if self.speed[0] < 0 and box.rect.right > self.rect.left:
                     self.speed[0] = 0
                     self.rect.left = box.rect.right
+                    print "Test"
