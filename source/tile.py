@@ -3,7 +3,7 @@ import pygame
 import struct
 import os
 import auxiliary
-
+from simple_sprite import Cell
 
 def get_tiled(path):
     xml_context = parse_tmx(path)
@@ -68,10 +68,11 @@ class Layer:
             for j in range(self.height):
                 image_index = data[i][j]
                 if image_index != 0:
-                    cell = Cell()
-                    setattr(cell, "image", self.image_manager.get_image(image_index))
-                    tile_size = cell.image.get_size()
-                    setattr(cell, "rect", pygame.Rect(i * tile_size[0], j * tile_size[1], *tile_size))
+                    image = self.image_manager.get_image(image_index)
+                    size = image.get_size()
+                    pos = i * size[0], j * size[1]
+                    cell = Cell(image, pos)
+
                     layer_group.add(cell)
         return layer_group
 
@@ -129,14 +130,6 @@ class TileSet:
     def _index_to_local(self, index):
         image_capacity = auxiliary.division(self.image_size, self.tile_size)
         return index % image_capacity[0], index // image_capacity[1]
-
-
-class Cell(pygame.sprite.Sprite):
-    def __int__(self):
-        pygame.sprite.Sprite.__init__(self)
-
-    def update(self, dt):
-        pass
 
 
 def throw_if_none(what, message=None):

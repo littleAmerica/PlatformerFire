@@ -26,9 +26,9 @@ class Bullet(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.Surface(size)
         self.image.fill(constants.GREEN)
-        self.rect = pygame.Rect(pos[0], pos[1], size[0], size[1])
+        self._rect = pygame.Rect(pos[0], pos[1], size[0], size[1])
         self.size = size
-        self.origin_center = self.rect.center
+        self.origin_center = self._rect.center
 
         self.speed = (0, 0)
         self.age = 0
@@ -38,10 +38,14 @@ class Bullet(pygame.sprite.Sprite):
         self.age += dt
 
         self.passed_way = multiply(self.speed, self.age)
-        self.rect.center = add(self.origin_center, self.passed_way)
+        self._rect.center = add(self.origin_center, self.passed_way)
 
         if not self.if_alive():
             self.kill()
+
+    @property
+    def rect(self):
+        return self._rect
 
     def if_alive(self):
         """

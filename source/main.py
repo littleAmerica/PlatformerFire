@@ -21,16 +21,22 @@ class Camera(object):
         self.state = pygame.Rect(0, 0, width, height)
 
     def apply(self, target):
-        return target.rect.move(self.state.topleft)
+        return target.move(self.state.topleft)
 
     def update(self, target):
-        self.state = self.camera_func(self.state, target.rect)
+        self.state = self.camera_func(self.state, target)
 
-zip()
+def camera_configure(camera, target_rect):
+    l, t, _, _ = target_rect
+    _, _, w, h = camera
+    l, t = -l+200 / 2, -t+200 / 2
+
+    return pygame.Rect(l, t, w, h)
+
 
 class Game(object):
 
-    DISPLAY = (800, 320)
+    DISPLAY = (200, 200)
     
     keyboard_map = {}
 
@@ -39,14 +45,22 @@ class Game(object):
         self.entities = pygame.sprite.LayeredUpdates()
         self.tiled = tile.get_tiled(TILED_FILE)
 
+        self.camera = Camera(camera_configure, *Game.DISPLAY)
+
         for layer in self.tiled:
             if layer.level == "1":
                 self.solid = layer.cells
             self.entities.add(layer.cells, layer=layer.level)
 
+        self.init_player()
+
+        for sprite in self.entities.sprites():
+            sprite.camera = self.camera
+
+
     def init_player(self):
         self.player = Player()
-        self.player.bound = screen.get_rect()
+        # self.player.bound = pygame.Rect(0, 0,500, 600)
 
         #make closure action (delay evaluation of method call - when we only need it)
         make_action = lambda obj, method: lambda: method(obj)
@@ -61,8 +75,6 @@ class Game(object):
     def main(self, screen):
         timer = pygame.time.Clock()
         dt = timer.tick(30)
-
-        self.init_player()
 
         bullets = pygame.sprite.Group()
         self.entities.add(bullets)
@@ -82,9 +94,12 @@ class Game(object):
 
             pressed = pygame.key.get_pressed()
 
+            self.camera.update(self.player._rect)
+
             for key, action in Game.keyboard_map.items():
                 if pressed[key]:
                     action()
+
 
             screen.fill(constants.SKY_BLUE)
 
