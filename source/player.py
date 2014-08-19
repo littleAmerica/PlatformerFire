@@ -62,7 +62,6 @@ class Player(pygame.sprite.Sprite):
         self._move_rect()
         self.__apply_speed()
 
-        self.speed[0] = 0
         if self.bound:
             self.rect.clamp_ip(self.bound)
 
@@ -98,6 +97,7 @@ class Player(pygame.sprite.Sprite):
                     self.speed[1] = 0
                     self.rect.top = box.rect.bottom
 
+
         self.rect.move_ip(self.speed[0], 0)
         for box in self.solid_objects.sprites():
             if self.rect.colliderect(box.rect):
@@ -109,3 +109,5 @@ class Player(pygame.sprite.Sprite):
                     self.speed[0] = 0
                     self.rect.left = box.rect.right
                     print "Test"
+
+        self.speed[0] = 0
