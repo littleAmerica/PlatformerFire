@@ -16,27 +16,26 @@ import tile
 TILED_FILE = "../tiled/level1.tmx"
 
 class Camera(object):
-    def __init__(self, camera_func, width, height):
-        self.camera_func = camera_func
-        self.state = pygame.Rect(0, 0, width, height)
+    def __init__(self, camera_size, level_size):
+        self.camera_size = camera_size
+        self.state = pygame.Rect((0, 0), camera_size)
+        self.level_size = level_size
 
     def apply(self, target):
         return target.move(self.state.topleft)
 
-    def update(self, target):
-        self.state = self.camera_func(self.state, target)
+    def update(self, target_rect):
+        top_left = target_rect.topleft
+        #new width = - old  width + camera_width / 2
+        new_top_left = add(multiply(top_left, -1), multiply(self.camera_size, 0.5))
 
-def camera_configure(camera, target_rect):
-    l, t, _, _ = target_rect
-    _, _, w, h = camera
-    l, t = -l+200 / 2, -t+200 / 2
-
-    return pygame.Rect(l, t, w, h)
+        self.state = pygame.Rect(new_top_left, target_rect.size)
 
 
 class Game(object):
 
-    DISPLAY = (200, 200)
+    DISPLAY = (400, 400)
+    LEVEL_SIZE = (1600, 320)
     
     keyboard_map = {}
 
@@ -45,7 +44,7 @@ class Game(object):
         self.entities = pygame.sprite.LayeredUpdates()
         self.tiled = tile.get_tiled(TILED_FILE)
 
-        self.camera = Camera(camera_configure, *Game.DISPLAY)
+        self.camera = Camera(Game.DISPLAY, Game.LEVEL_SIZE)
 
         for layer in self.tiled:
             if layer.level == "1":
@@ -60,7 +59,7 @@ class Game(object):
 
     def init_player(self):
         self.player = Player()
-        # self.player.bound = pygame.Rect(0, 0,500, 600)
+        self.player.bound = pygame.Rect((0, 0), Game.LEVEL_SIZE)
 
         #make closure action (delay evaluation of method call - when we only need it)
         make_action = lambda obj, method: lambda: method(obj)
