@@ -1,40 +1,23 @@
 __author__ = 'matan'
 
-import pygame
 from player import Player
 from simple_sprite import *
 from auxiliary import *
 import tile
+from camera import Camera
 
 #Tower like in ice climbers
-#TODO Animation - addmodule
-#TODO Camera - add module
-#TODO Phisics - something goes terrible wrong
-#TODO Phisics - events on touching with the screen
-#TODO Tiled - adding alpha for surfaces
+#TODO Animation - add module
+#TODO Physics - something goes terrible wrong
+#TODO Physics - events on touching with the screen
+#TODO Health Bar
+#TODO Refactoring - get rid of coherence in tile and simple_sprite
 
 TILED_FILE = "../tiled/level1.tmx"
 
-class Camera(object):
-    def __init__(self, camera_size, level_size):
-        self.camera_size = camera_size
-        self.state = pygame.Rect((0, 0), camera_size)
-        self.level_size = level_size
-
-    def apply(self, target):
-        return target.move(self.state.topleft)
-
-    def update(self, target_rect):
-        top_left = target_rect.topleft
-        #new width = - old  width + camera_width / 2
-        new_top_left = add(multiply(top_left, -1), multiply(self.camera_size, 0.5))
-
-        self.state = pygame.Rect(new_top_left, target_rect.size)
-
-
 class Game(object):
 
-    DISPLAY = (400, 400)
+    DISPLAY = (200, 200)
     LEVEL_SIZE = (1600, 320)
     
     keyboard_map = {}
@@ -44,7 +27,7 @@ class Game(object):
         self.entities = pygame.sprite.LayeredUpdates()
         self.tiled = tile.get_tiled(TILED_FILE)
 
-        self.camera = Camera(Game.DISPLAY, Game.LEVEL_SIZE)
+        self.camera = Camera(Game.DISPLAY, pygame.Rect((0, 0), Game.LEVEL_SIZE))
 
         for layer in self.tiled:
             if layer.level == "1":
@@ -93,12 +76,11 @@ class Game(object):
 
             pressed = pygame.key.get_pressed()
 
-            self.camera.update(self.player._rect)
+            self.camera.update(self.player.true_rect)
 
             for key, action in Game.keyboard_map.items():
                 if pressed[key]:
                     action()
-
 
             screen.fill(constants.SKY_BLUE)
 

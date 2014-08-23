@@ -25,7 +25,7 @@ class Cell(pygame.sprite.Sprite):
         self.image = image
         self.size = image.get_size()
         self.pos = pos
-        self._rect = pygame.Rect(self.pos, self.size)
+        self.true_rect = pygame.Rect(self.pos, self.size)
         self.camera = camera
 
     def update(self, dt):
@@ -35,5 +35,5 @@ class Cell(pygame.sprite.Sprite):
     @property
     def rect(self):
         if self.camera is not None:
-            return self.camera.apply(self._rect)
-        return self._rect
+            return self.camera.apply(self.true_rect)
+        return self.true_rect
